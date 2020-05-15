@@ -43,11 +43,11 @@ public abstract class FaceHandleActivity extends AppCompatActivity implements Fa
         startCameraSource();
     }
 
-    abstract int layout();
+    public abstract int layout();
 
-    abstract CameraSourcePreview previewAuth();
+    public abstract CameraSourcePreview previewAuth();
 
-    abstract GraphicOverlay previewOverlay();
+    public abstract GraphicOverlay previewOverlay();
 
     @Override
     public void onMultipleFacesDetected(int n) {
