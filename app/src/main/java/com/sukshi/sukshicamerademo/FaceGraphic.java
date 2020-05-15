@@ -20,8 +20,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.graphics.PorterDuff;
 
 import com.google.android.gms.vision.face.Face;
@@ -48,6 +48,7 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
     public Paint mHintTextPaint;
 
     private volatile Face mFace;
+    private GraphicOverlay mOverlay;
 
     public static Float faceArea;
 
@@ -56,10 +57,17 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
     public FaceGraphic(GraphicOverlay overlay, Context context) {
         super(overlay);
         this.context1 = context;
+        this.mOverlay = overlay;
         opt = new BitmapFactory.Options();
         opt.inScaled = false;
         resources = context.getResources();
         marker = BitmapFactory.decodeResource(resources, R.drawable.marker, opt);
+
+        mHintOutlinePaint = new Paint();
+        mHintOutlinePaint.setColor(Color.RED);
+        mHintOutlinePaint.setStyle(Paint.Style.STROKE);
+        mHintOutlinePaint.setStrokeWidth(5.0f);
+
         initializePaints(resources);
     }
 
@@ -76,7 +84,9 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
         postInvalidate();
     }
 
-    private void initializePaints(Resources resources) { }
+    private void initializePaints(Resources resources) {
+
+    }
 
     public void goneFace() {
         mFace = null;
@@ -90,11 +100,11 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
 
         Face face = mFace;
         if(face == null) {
-
             canvas.drawColor(0, PorterDuff.Mode.CLEAR);
             isSmilingProbability = -1;
             eyeRightOpenProbability= -1;
             eyeLeftOpenProbability = -1;
+            mOverlay.setPaintColor(Color.RED);
             return;
         }
 
@@ -109,8 +119,8 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
         float top = centerY - offsetY * 0.75f;
         float bottom = centerY + offsetY * 0.75f;
 
-//        if (mHintOutlinePaint != null){
-//            canvas.drawRect(left, top, right, bottom, mHintOutlinePaint);
-//        }
+        if (mHintOutlinePaint != null) {
+            canvas.drawRect(left, top, right, bottom, mHintOutlinePaint);
+        }
     }
 }

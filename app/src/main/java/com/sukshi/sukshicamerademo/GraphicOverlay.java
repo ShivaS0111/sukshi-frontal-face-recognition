@@ -17,8 +17,14 @@ package com.sukshi.sukshicamerademo;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.util.AttributeSet;
 import android.view.View;
+
+import androidx.annotation.ColorInt;
 
 import com.google.android.gms.vision.CameraSource;
 
@@ -33,7 +39,7 @@ public class GraphicOverlay extends View {
     private float mHeightScaleFactor = 1.0f;
     private int mFacing = CameraSource.CAMERA_FACING_BACK;
     private Set<Graphic> mGraphics = new HashSet<>();
-
+    private static final float RADIUS = 200;
 
     public static abstract class Graphic {
         private GraphicOverlay mOverlay;
@@ -79,12 +85,11 @@ public class GraphicOverlay extends View {
         }
     }
 
+    Paint mBackgroundPaint, mImgCircularPaint;
+
     public GraphicOverlay(Context context) {
         super(context);
-    }
-
-    public GraphicOverlay(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        init();
     }
 
     /**
@@ -130,6 +135,11 @@ public class GraphicOverlay extends View {
         postInvalidate();
     }
 
+    public GraphicOverlay(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init();
+    }
+
     /**
      * Draws the overlay with its associated graphic objects.
      */
@@ -142,10 +152,33 @@ public class GraphicOverlay extends View {
                 mWidthScaleFactor = (float) canvas.getWidth() / (float) mPreviewWidth;
                 mHeightScaleFactor = (float) canvas.getHeight() / (float) mPreviewHeight;
             }
-
+            addCircleGraphicOverlay(canvas);
             for (Graphic graphic : mGraphics) {
                 graphic.draw(canvas);
             }
+        }
+    }
+
+    private void addCircleGraphicOverlay(Canvas canvas) {
+        int w = (getWidth()) / 2;
+        int w1 = (getWidth() - 40) / 2;
+        canvas.drawCircle(w, w, w, mImgCircularPaint);
+        canvas.drawCircle(w, w, (w + w1) / 2, mBackgroundPaint);
+    }
+
+    private void init() {
+        setWillNotDraw(false);
+        setLayerType(LAYER_TYPE_HARDWARE, null);
+
+        mBackgroundPaint = new Paint();
+        mBackgroundPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+        mImgCircularPaint = new Paint();
+        mImgCircularPaint.setColor(Color.parseColor("#FF0000"));
+    }
+
+    public void setPaintColor(@ColorInt int color) {
+        if (mImgCircularPaint != null) {
+            mImgCircularPaint.setColor(color);
         }
     }
 }

@@ -297,9 +297,61 @@ public class CameraSource {
          */
         void onPictureTaken(byte[] data);
     }
-    public static interface OnFrontalFaceDetectedListener {
-        public void onFrontalFaceDetected(byte[] data);
 
+    public static Camera.Size getBestAspectPictureSize(Camera camera, Context context) {
+        Camera.Parameters parameters = camera.getParameters();
+        List<Camera.Size> supportedPictureSizes = parameters.getSupportedPictureSizes();
+        float targetRatio = Utils2.getScreenRatio(context);
+        Camera.Size bestSize = null;
+        TreeMap<Double, List<Camera.Size>> diffs = new TreeMap<>();
+
+        for (Camera.Size size : supportedPictureSizes) {
+            float ratio = (float) size.width / size.height;
+            double diff = Math.abs(ratio - targetRatio);
+            if (diff < ratioTolerance) {
+                if (diffs.containsKey(diff)) {
+                    //add the value to the list
+                    diffs.get(diff).add(size);
+                } else {
+                    List<Camera.Size> newList = new ArrayList<>();
+                    newList.add(size);
+                    diffs.put(diff, newList);
+                }
+            }
+        }
+
+        if (diffs.isEmpty()) {
+            for (Camera.Size size : supportedPictureSizes) {
+                float ratio = (float) size.width / size.height;
+                double diff = Math.abs(ratio - targetRatio);
+                if (diff < maxRatioTolerance) {
+                    if (diffs.containsKey(diff)) {
+                        //add the value to the list
+                        diffs.get(diff).add(size);
+                    } else {
+                        List<Camera.Size> newList = new ArrayList<>();
+                        newList.add(size);
+                        diffs.put(diff, newList);
+                    }
+                }
+            }
+        }
+
+        //diffs now contains all of the usable sizes
+        //now let's see which one has the least amount of
+        for (Map.Entry entry : diffs.entrySet()) {
+            List<?> entries = (List) entry.getValue();
+            for (int i = 0; i < entries.size(); i++) {
+                Camera.Size s = (Camera.Size) entries.get(i);
+                if (bestSize == null) {
+                    bestSize = s;
+                } else if (bestSize.width < s.width || bestSize.height < s.height) {
+                    bestSize = s;
+                }
+            }
+        }
+        if (bestSize == null) return supportedPictureSizes.get(0);
+        return bestSize;
     }
     /**
      * Callback interface used to indicate when video Recording Started.
@@ -351,9 +403,62 @@ public class CameraSource {
         void onAutoFocusMoving(boolean start);
     }
 
-    public interface SixFramesProcessedCallback{
+    public static Camera.Size getBestAspectPreviewSize(Camera camera, Context context) {
+        Camera.Parameters parameters = camera.getParameters();
+        List<Camera.Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
+        float targetRatio = Utils2.getScreenRatio(context);
+        Camera.Size bestSize = null;
+        TreeMap<Double, List<Camera.Size>> diffs = new TreeMap<>();
 
-        public void onSixFramesProcessed();
+        for (Camera.Size size : supportedPreviewSizes) {
+            float ratio = (float) size.width / size.height;
+            double diff = Math.abs(ratio - targetRatio);
+            if (diff < ratioTolerance) {
+                if (diffs.containsKey(diff)) {
+                    //add the value to the list
+                    diffs.get(diff).add(size);
+                } else {
+                    List<Camera.Size> newList = new ArrayList<>();
+                    newList.add(size);
+                    diffs.put(diff, newList);
+                }
+            }
+        }
+
+        if (diffs.isEmpty()) {
+            for (Camera.Size size : supportedPreviewSizes) {
+                float ratio = (float) size.width / size.height;
+                double diff = Math.abs(ratio - targetRatio);
+                if (diff < maxRatioTolerance) {
+                    if (diffs.containsKey(diff)) {
+                        //add the value to the list
+                        diffs.get(diff).add(size);
+                    } else {
+                        List<Camera.Size> newList = new ArrayList<>();
+                        newList.add(size);
+                        diffs.put(diff, newList);
+                    }
+                }
+            }
+        }
+
+        //diffs now contains all of the usable sizes
+        //now let's see which one has the least amount of
+        for (Map.Entry entry : diffs.entrySet()) {
+            List<?> entries = (List) entry.getValue();
+            for (int i = 0; i < entries.size(); i++) {
+                Camera.Size s = (Camera.Size) entries.get(i);
+                if (s.height <= 1080 && s.width <= 1920) {
+                    if (bestSize == null) {
+                        bestSize = s;
+                    } else if (bestSize.width < s.width || bestSize.height < s.height) {
+                        bestSize = s;
+                    }
+                }
+            }
+        }
+        if (bestSize == null) return supportedPreviewSizes.get(0);
+        return bestSize;
     }
     //==============================================================================================
     // Public
@@ -927,121 +1032,6 @@ public class CameraSource {
         return -1;
     }
 
-    public static Camera.Size getBestAspectPictureSize(Camera camera, Context context) {
-        Camera.Parameters parameters = camera.getParameters();
-        List<Camera.Size> supportedPictureSizes = parameters.getSupportedPictureSizes();
-        float targetRatio = Utils2.getScreenRatio(context);
-        Camera.Size bestSize = null;
-        TreeMap<Double, List<Camera.Size>> diffs = new TreeMap<>();
-
-        for (Camera.Size size : supportedPictureSizes) {
-            float ratio = (float) size.width / size.height;
-            double diff = Math.abs(ratio - targetRatio);
-            if (diff < ratioTolerance){
-                if (diffs.keySet().contains(diff)){
-                    //add the value to the list
-                    diffs.get(diff).add(size);
-                } else {
-                    List<Camera.Size> newList = new ArrayList<>();
-                    newList.add(size);
-                    diffs.put(diff, newList);
-                }
-            }
-        }
-
-        if(diffs.isEmpty()) {
-            for (Camera.Size size : supportedPictureSizes) {
-                float ratio = (float)size.width / size.height;
-                double diff = Math.abs(ratio - targetRatio);
-                if (diff < maxRatioTolerance){
-                    if (diffs.keySet().contains(diff)){
-                        //add the value to the list
-                        diffs.get(diff).add(size);
-                    } else {
-                        List<Camera.Size> newList = new ArrayList<>();
-                        newList.add(size);
-                        diffs.put(diff, newList);
-                    }
-                }
-            }
-        }
-
-        //diffs now contains all of the usable sizes
-        //now let's see which one has the least amount of
-        for (Map.Entry entry: diffs.entrySet()){
-            List<?> entries = (List) entry.getValue();
-            for (int i=0; i<entries.size(); i++) {
-                Camera.Size s = (Camera.Size) entries.get(i);
-                if(bestSize == null) {
-                    bestSize = s;
-                } else if(bestSize.width < s.width || bestSize.height < s.height) {
-                    bestSize = s;
-                }
-            }
-        }
-        if(bestSize == null) return supportedPictureSizes.get(0);
-        return bestSize;
-    }
-
-    public static Camera.Size getBestAspectPreviewSize(Camera camera, Context context) {
-        Camera.Parameters parameters = camera.getParameters();
-        List<Camera.Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
-        float targetRatio = Utils2.getScreenRatio(context);
-        Camera.Size bestSize = null;
-        TreeMap<Double, List<Camera.Size>> diffs = new TreeMap<>();
-
-        for (Camera.Size size : supportedPreviewSizes) {
-            float ratio = (float)size.width / size.height;
-            double diff = Math.abs(ratio - targetRatio);
-            if (diff < ratioTolerance){
-                if (diffs.keySet().contains(diff)){
-                    //add the value to the list
-                    diffs.get(diff).add(size);
-                } else {
-                    List<Camera.Size> newList = new ArrayList<>();
-                    newList.add(size);
-                    diffs.put(diff, newList);
-                }
-            }
-        }
-
-        if(diffs.isEmpty()) {
-            for (Camera.Size size : supportedPreviewSizes) {
-                float ratio = (float)size.width / size.height;
-                double diff = Math.abs(ratio - targetRatio);
-                if (diff < maxRatioTolerance){
-                    if (diffs.keySet().contains(diff)){
-                        //add the value to the list
-                        diffs.get(diff).add(size);
-                    } else {
-                        List<Camera.Size> newList = new ArrayList<>();
-                        newList.add(size);
-                        diffs.put(diff, newList);
-                    }
-                }
-            }
-        }
-
-        //diffs now contains all of the usable sizes
-        //now let's see which one has the least amount of
-        for (Map.Entry entry: diffs.entrySet()){
-            List<?> entries = (List) entry.getValue();
-            for (int i=0; i<entries.size(); i++) {
-                Camera.Size s = (Camera.Size) entries.get(i);
-                if(s.height <= 1080 && s.width <= 1920) {
-                    if(bestSize == null) {
-                        bestSize = s;
-                    } else if(bestSize.width < s.width || bestSize.height < s.height) {
-                        bestSize = s;
-                    }
-                }
-            }
-        }
-        if(bestSize == null) return supportedPreviewSizes.get(0);
-        return bestSize;
-    }
-
-
     public static Camera.Size getBestAspectPictureSizeMaxW(Camera camera, Context context) {
         Camera.Parameters parameters = camera.getParameters();
         List<Camera.Size> supportedPictureSizes = parameters.getSupportedPictureSizes();
@@ -1050,10 +1040,15 @@ public class CameraSource {
 
         for (Camera.Size currentSize: supportedPictureSizes){
             float ratio = (float) currentSize.width / currentSize.height;
-            //Log.e("vishwamSukshiPicture", currentSize.width +", "+currentSize.height+" : "+ratio );
+            Log.e("vishwamSukshiPicture", currentSize.width + ", " + currentSize.height + " : " + ratio);
             int currentX = currentSize.width;
             int currentY = currentSize.height;
-            boolean b = (float)currentX / currentY == (float)4/3;
+            /*if( currentX == currentY){
+                bestSize = currentSize;
+                lastY = currentY;
+            }*/
+            //boolean b = (float)currentX / currentY == (float)4/3;
+            boolean b = (float) currentX / currentY == 1.0;
             if (currentY > lastY && b){
                 bestSize = currentSize;
                 lastY = currentY;
@@ -1074,7 +1069,8 @@ public class CameraSource {
             //Log.e("vishwamSukshiPreview", currentSize.width +", "+currentSize.height+" : "+ratio );
             int currentX = currentSize.width;
             int currentY = currentSize.height;
-            boolean b = (float)currentX / currentY == (float)4/3;
+            //boolean b = (float)currentX / currentY == (float)4/3;
+            boolean b = (float) currentX / currentY == 1.0;
             if (currentY > lastY && b){
                 bestSize = currentSize;
                 lastY = currentY;
@@ -1082,6 +1078,17 @@ public class CameraSource {
         }
 
         return bestSize;
+    }
+
+
+    public interface OnFrontalFaceDetectedListener {
+        void onFrontalFaceDetected(byte[] data);
+
+    }
+
+    public interface SixFramesProcessedCallback {
+
+        void onSixFramesProcessed();
     }
 
     /**

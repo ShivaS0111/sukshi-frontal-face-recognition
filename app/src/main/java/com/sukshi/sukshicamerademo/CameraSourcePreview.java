@@ -16,6 +16,7 @@ package com.sukshi.sukshicamerademo;
  */
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.SurfaceTexture;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -48,6 +49,29 @@ public class CameraSourcePreview extends ViewGroup {
     private int screenHeight;
     private int screenRotation;
 
+    private final SurfaceHolder.Callback mSurfaceViewListener = new SurfaceHolder.Callback() {
+        @Override
+        public void surfaceCreated(SurfaceHolder surface) {
+            mSurfaceAvailable = true;
+            mOverlay.bringToFront();
+            try {
+                startIfReady();
+            } catch (IOException e) {
+                Log.e(TAG, "Could not start caera source.", e);
+            }
+        }
+
+        @Override
+        public void surfaceDestroyed(SurfaceHolder surface) {
+            mSurfaceAvailable = false;
+        }
+
+        @Override
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            Log.e("Surface Changed", "format:" + format + "    width:" + width + "     height:" + height);
+        }
+    };
+
     public CameraSourcePreview(Context context) {
         super(context);
         screenHeight = Utils2.getScreenHeight(context);
@@ -59,19 +83,7 @@ public class CameraSourcePreview extends ViewGroup {
         mSurfaceView.getHolder().addCallback(mSurfaceViewListener);
         mAutoFitTextureView = new AutoFitTextureView(context);
         mAutoFitTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
-    }
 
-    public CameraSourcePreview(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        screenHeight = Utils2.getScreenWidth(context) * 4/3;
-        screenWidth = Utils2.getScreenWidth(context);
-        screenRotation = Utils2.getScreenRotation(context);
-        mStartRequested = false;
-        mSurfaceAvailable = false;
-        mSurfaceView = new SurfaceView(context);
-        mSurfaceView.getHolder().addCallback(mSurfaceViewListener);
-        mAutoFitTextureView = new AutoFitTextureView(context);
-        mAutoFitTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
     }
 
     public void start(CameraSource cameraSource, GraphicOverlay overlay) throws IOException {
@@ -129,23 +141,19 @@ public class CameraSourcePreview extends ViewGroup {
         }
     }
 
-    private final SurfaceHolder.Callback mSurfaceViewListener = new SurfaceHolder.Callback() {
-        @Override
-        public void surfaceCreated(SurfaceHolder surface) {
-            mSurfaceAvailable = true;
-            mOverlay.bringToFront();
-            try {startIfReady();} catch (IOException e) {
-                Log.e(TAG, "Could not start caera source.", e);}
-        }
-        @Override
-        public void surfaceDestroyed(SurfaceHolder surface) {
-            mSurfaceAvailable = false;
-        }
-        @Override
-        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+    public CameraSourcePreview(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        screenHeight = Utils2.getScreenWidth(context) * 4 / 3;
+        screenWidth = Utils2.getScreenWidth(context);
 
-        }
-    };
+        screenRotation = Utils2.getScreenRotation(context);
+        mStartRequested = false;
+        mSurfaceAvailable = false;
+        mSurfaceView = new SurfaceView(context);
+        mSurfaceView.getHolder().addCallback(mSurfaceViewListener);
+        mAutoFitTextureView = new AutoFitTextureView(context);
+        mAutoFitTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+    }
 
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override
@@ -183,6 +191,7 @@ public class CameraSourcePreview extends ViewGroup {
 
         //RESIZE PREVIEW IGNORING ASPECT RATIO. THIS IS ESSENTIAL.
         int newWidth = (height * screenWidth) / screenHeight;
+        newWidth = width;
 
         final int layoutWidth = right - left;
         final int layoutHeight = bottom - top;
@@ -197,5 +206,10 @@ public class CameraSourcePreview extends ViewGroup {
         for (int i = 0; i < getChildCount(); ++i) {getChildAt(i).layout(0, 0, childWidth, childHeight);}
         try {startIfReady();} catch (IOException e) {
             Log.e(TAG, "Could not start caera source.", e);}
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
     }
 }

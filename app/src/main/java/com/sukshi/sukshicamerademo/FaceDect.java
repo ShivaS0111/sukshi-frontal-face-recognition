@@ -17,17 +17,15 @@ package com.sukshi.sukshicamerademo;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.util.Log;
-import android.util.SparseArray;
+import android.graphics.Color;
 
-import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.Tracker;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 import com.google.android.gms.vision.face.Landmark;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FaceDect {
@@ -37,6 +35,7 @@ public class FaceDect {
     public static boolean detectorAvailable = true;
 
     public static OnMultipleFacesDetectedListener onMultipleFacesDetectedListener;
+    public static CameraSource.OnFrontalFaceDetectedListener onFrontalFaceDetectedListener;
     public static OnCaptureListener onCaptureListener;
 
     public static FaceDetector previewFaceDetector = null;
@@ -64,17 +63,14 @@ public class FaceDect {
         mGraphicOverlay = graphicOverlay;
 
         initialisefaceDetec();
-//        this.mOnFrontalFaceDetectedListener = (OnFrontalFaceDetectedListener) context;
-        this.onMultipleFacesDetectedListener = (OnMultipleFacesDetectedListener) context;
-        this.onCaptureListener= (OnCaptureListener) context;
+        //this.onFrontalFaceDetectedListener = (CameraSource.OnFrontalFaceDetectedListener) context;
+        onMultipleFacesDetectedListener = (OnMultipleFacesDetectedListener) context;
+        onCaptureListener = (OnCaptureListener) context;
     }
 
     public FaceDect(Context mcontext) {
-
         this.context = mcontext;
-
         initialisefaceDetec();
-
     }
     /**
      * This  method used to initialise FaceDetector and set it with mutliprocessor using its Builder class.
@@ -136,20 +132,48 @@ public class FaceDect {
         @Override
         public void onUpdate(FaceDetector.Detections<Face> detectionResults, final Face face) {
 
-            List<Landmark> landmarks = face.getLandmarks();
-            int landmarksCount = landmarks.size();
-
-            Log.e("landmarksCount", String.valueOf(landmarksCount));
-
+            boolean isFaceDetected = isFrontalFaceDetected(face);
+            mOverlay.setPaintColor(isFaceDetected ? Color.GREEN : Color.RED);
+            onMultipleFacesDetectedListener.onMultipleFacesDetected(isFaceDetected ? 1 : 0);
             mOverlay.add(mFaceGraphic);
             mFaceGraphic.updateFace(face);
         }
+
+        synchronized boolean isFrontalFaceDetected(Face face) {
+            List<String> frontalFaceLandMarks = getFrontalFaceLandMarks();
+            for (Landmark landmark : face.getLandmarks()) {
+                frontalFaceLandMarks.remove(String.valueOf(landmark.getType()));
+            }
+            return frontalFaceLandMarks.isEmpty() && face.getEulerY() >= -8 && face.getEulerY() <= 8
+                    && face.getEulerZ() >= -4 && face.getEulerZ() <= 4;
+        }
+
+
+        private List<String> getFrontalFaceLandMarks() {
+            //right eye, left eye, nose base, left cheek, right cheek, left mouth, right mouth, bottom mouth
+            return new ArrayList<String>() {{
+                add(String.valueOf(Landmark.RIGHT_EYE));
+                add(String.valueOf(Landmark.LEFT_EYE));
+
+                add(String.valueOf(Landmark.NOSE_BASE));
+
+                add(String.valueOf(Landmark.LEFT_CHEEK));
+                add(String.valueOf(Landmark.RIGHT_CHEEK));
+
+                add(String.valueOf(Landmark.LEFT_MOUTH));
+                add(String.valueOf(Landmark.RIGHT_MOUTH));
+                add(String.valueOf(Landmark.BOTTOM_MOUTH));
+            }};
+        }
+
         /**
          * On No face detected is method is called and previously inflated graphic overlay is removed.
          * **/
         @Override
         public void onMissing(FaceDetector.Detections<Face> detectionResults) {
 
+            onMultipleFacesDetectedListener.onMultipleFacesDetected(0);
+            mOverlay.setPaintColor(Color.RED);
             mFaceGraphic.goneFace();
             mOverlay.remove(mFaceGraphic);
             mOverlay.clear();
@@ -159,12 +183,11 @@ public class FaceDect {
          * **/
         @Override
         public void onDone() {
-
+            onMultipleFacesDetectedListener.onMultipleFacesDetected(0);
             mFaceGraphic.goneFace();
             mOverlay.remove(mFaceGraphic);
             mOverlay.clear();
         }
     }
-
 
 }
