@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".CameraActivity"
+    android:id="@+id/camRLayout">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/preview" />
+
+    <TextView
+        android:id="@+id/faceStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/camera"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:padding="10dp"
+        android:text="@string/face_not_detected"
+        android:textColor="@color/colorRed" />
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:id="@+id/camera"
+        android:layout_centerInParent="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="40dp"
+        android:src="@drawable/enable_camera"/>
+
+    <com.sukshi.sukshicamerademo.CameraSourcePreview
+        android:id="@+id/previewAuth"
+        android:layout_width="250dp"
+
+        android:layout_height="250dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp">
+
+        <com.sukshi.sukshicamerademo.GraphicOverlay
+            android:id="@+id/faceOverlayAuth"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#ABC35959" />
+
+    </com.sukshi.sukshicamerademo.CameraSourcePreview>
+
+</RelativeLayout>
