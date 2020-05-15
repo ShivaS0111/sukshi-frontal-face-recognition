@@ -120,7 +120,7 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
         float bottom = centerY + offsetY * 0.75f;
 
         if (mHintOutlinePaint != null) {
-            canvas.drawRect(left, top, right, bottom, mHintOutlinePaint);
+            //canvas.drawRect(left, top, right, bottom, mHintOutlinePaint);
         }
     }
 }
